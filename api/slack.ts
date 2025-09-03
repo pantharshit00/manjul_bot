@@ -94,7 +94,11 @@ export default async function handler(req: any, res: any) {
           getRandomChallenge(),
         ]);
 
-        const message = `🎯 The wheel landed on @${teammate} → Your fun task is: ${challenge}`;
+        // Format the mention properly - if it starts with U, it's a user ID, otherwise treat as username
+        const mention = teammate.startsWith("U")
+          ? `<@${teammate}>`
+          : `@${teammate}`;
+        const message = `🎯 The wheel landed on ${mention} → Your fun task is: ${challenge}`;
 
         res.status(200).json({
           response_type: "in_channel",
