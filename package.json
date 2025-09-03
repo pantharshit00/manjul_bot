@@ -1,0 +1,29 @@
+{
+  "name": "manjul-slack-bot",
+  "version": "1.0.0",
+  "description": "Slack bot for spinning the wheel to select teammates for fun tasks",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "slack",
+    "bot",
+    "typescript",
+    "vercel"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@slack/bolt": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.3.0",
+    "vercel": "^32.0.0"
+  }
+}
