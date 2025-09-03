@@ -1,10 +1,4 @@
-import { App } from "@slack/bolt";
-
-// Initialize Slack app
-const app = new App({
-  token: process.env.SLACK_BOT_TOKEN,
-  signingSecret: process.env.SLACK_SIGNING_SECRET,
-});
+// No imports needed for simple slash command handling
 
 async function getRandomTeammate(): Promise<string> {
   try {
@@ -58,26 +52,9 @@ async function getRandomChallenge(): Promise<string> {
   }
 }
 
-// Handle /spin slash command
-app.command("/spin", async ({ command, ack, respond }) => {
-  await ack();
+// Slash command handling is done directly in the handler function below
 
-  try {
-    const [teammate, challenge] = await Promise.all([
-      getRandomTeammate(),
-      getRandomChallenge(),
-    ]);
-
-    const message = `🎯 The wheel landed on @${teammate} → Your fun task is: ${challenge}`;
-
-    await respond(message);
-  } catch (error) {
-    console.error("Error in /spin command:", error);
-    await respond(
-      "Sorry, I encountered an error while spinning the wheel. Please try again!"
-    );
-  }
-});
+// No signature verification - simplified for development
 
 // Vercel serverless function handler
 export default async function handler(req: any, res: any) {
@@ -87,9 +64,42 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    // Handle Slack request
-    await app.processEvent(req.body);
-    res.status(200).json({ ok: true });
+    // Get raw body as string
+    let rawBody = "";
+    if (typeof req.body === "string") {
+      rawBody = req.body;
+    } else if (req.body) {
+      rawBody = JSON.stringify(req.body);
+    }
+
+    // Parse form data
+    const params = new URLSearchParams(rawBody);
+    const slackPayload = Object.fromEntries(params.entries());
+
+    // Check if it's a slash command
+    if (slackPayload.command === "/spin") {
+      try {
+        const [teammate, challenge] = await Promise.all([
+          getRandomTeammate(),
+          getRandomChallenge(),
+        ]);
+
+        const message = `🎯 The wheel landed on @${teammate} → Your fun task is: ${challenge}`;
+
+        res.status(200).json({
+          response_type: "in_channel",
+          text: message,
+        });
+      } catch (error) {
+        console.error("Error in /spin command:", error);
+        res.status(200).json({
+          response_type: "ephemeral",
+          text: "Sorry, I encountered an error while spinning the wheel. Please try again!",
+        });
+      }
+    } else {
+      res.status(200).json({ text: "Unknown command" });
+    }
   } catch (error) {
     console.error("Error processing Slack event:", error);
     res.status(500).json({ error: "Internal server error" });
