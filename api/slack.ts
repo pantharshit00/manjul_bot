@@ -64,20 +64,30 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    // Get raw body as string
-    let rawBody = "";
+    // Debug: Log the raw request
+    console.log("Request method:", req.method);
+    console.log("Request headers:", req.headers);
+    console.log("Request body type:", typeof req.body);
+    console.log("Request body:", req.body);
+
+    // Handle different body formats
+    let slackPayload: any = {};
+
     if (typeof req.body === "string") {
-      rawBody = req.body;
-    } else if (req.body) {
-      rawBody = JSON.stringify(req.body);
+      // URL-encoded form data
+      const params = new URLSearchParams(req.body);
+      slackPayload = Object.fromEntries(params.entries());
+    } else if (req.body && typeof req.body === "object") {
+      // Already parsed object
+      slackPayload = req.body;
     }
 
-    // Parse form data
-    const params = new URLSearchParams(rawBody);
-    const slackPayload = Object.fromEntries(params.entries());
+    console.log("Parsed payload:", slackPayload);
 
     // Check if it's a slash command
-    if (slackPayload.command === "/spin") {
+    console.log("Looking for command:", slackPayload.command);
+
+    if (slackPayload.command === "/spin" || slackPayload.command === "spin") {
       try {
         const [teammate, challenge] = await Promise.all([
           getRandomTeammate(),
@@ -98,7 +108,13 @@ export default async function handler(req: any, res: any) {
         });
       }
     } else {
-      res.status(200).json({ text: "Unknown command" });
+      console.log("Unknown command received:", slackPayload.command);
+      console.log("Full payload:", JSON.stringify(slackPayload, null, 2));
+      res.status(200).json({
+        text: `Unknown command: ${
+          slackPayload.command || "undefined"
+        }. Expected: /spin`,
+      });
     }
   } catch (error) {
     console.error("Error processing Slack event:", error);
